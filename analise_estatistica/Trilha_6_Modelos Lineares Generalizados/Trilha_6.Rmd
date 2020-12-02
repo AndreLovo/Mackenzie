@@ -1,0 +1,161 @@
+---
+title: "Trilha_6_Regressao_Logistica_Titanic"
+author: "André Gustavo Silva Lovo"
+date: "26/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Regressao Logistica - Base de dados Titanic  
+  
+### Manipulando os dados
+
+```{r manipulando os dados}
+#install.packages("dplyr")
+library(dplyr)
+```
+### Importando a base de dados treino
+```{r importando a base de dados treino}
+treino <- read.csv("titanic_train.csv")
+```
+
+### Importando a base de dados teste
+```{r importando a base de dados teste}
+teste <- read.csv("titanic_test.csv")
+```
+
+### Analisando o Banco de dados treino e suas variáveis
+```{r analisando o BD e suas variáveis}
+str(treino)
+```
+### Vocabulário do banco de dados
+PassengerId: int - idpassageiro  
+ $ Survived   : int - sobrevivente - (0 = No, 1 = Yes)   
+ $ Pclass     : int - classe passageiro - (1 = 1st, 2 = 2nd, 3 = 3rd)  
+ $ Name       : chr - nome   
+ $ Sex        : chr - sexo   
+ $ Age        : num - idade   
+ $ SibSp      : int - numero de irmaos e conjuges a bordo  
+ $ Parch      : int - numero de pais e filhos a bordo   
+ $ Ticket     : chr - numero do bilhete   
+ $ Fare       : num - tarifa do passageiro   
+ $ Cabin      : chr - numero da cabine   
+ $ Embarked   : chr - porto de embarque - (C = Cherbourg, Q = Queenstown, S = Southampton)   
+
+
+
+### Separando as colunas que queremos trabalhar
+```{r separando as colunas que queremos trabalhar - pegando do enunciado}
+treino <- treino[ ,c('PassengerId' ,'Survived', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')]
+
+```
+
+### Verificando as linhas iniciais do meu banco de dados - head e tail
+```{r verificando as linhas iniciais do meu banco de dados}
+head(as.matrix(treino))
+```
+
+### Verificando as linhas finais do meu banco de dados - head e tail
+```{r verificando as linhas finais do meu banco de dados}
+tail(as.matrix(treino))
+```
+
+### Analisando o BD teste e suas variáveis
+```{r analisando o BD teste e suas variáveis}
+str(teste)
+```
+### Queremos criar e preencher a coluna Survived (sobreviventes) `a partir do meu modelo de predicao no BD teste. Mas antes eu preciso treinar o modelo à partir do banco de dados treino.
+
+### Separando as colunas que queremos trabalhar no BD teste
+```{r separando as colunas que queremos trabalhar - BD teste vamos validar o que estamos fazendo}
+teste <- treino[ ,c('PassengerId' ,'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked')]
+```
+
+### Trabalhando com a coluna Age - procurando o na e substituindo pelo valor medio dos valores os valores que sao na
+```{r trabalhando com  a coluna age}
+head(treino$Age, 10)
+```
+### Análise1
+```{r Análise1}
+hist(treino$Age)
+mean(treino$Age)
+median(treino$Age)
+
+# Nao consigo medir as medias por causa dos NAs
+```
+### Analise2
+```{r Analise2}
+mean(treino$Age)
+# Nao conseguimos calcular por causa dos NAs
+mean(is.na(treino$Age)==F)
+median(is.na(treino$Age)==F)
+
+#Acertando o valor da media das idades
+mean(treino$Age, na.rm = TRUE)
+
+#Acertando o valor da mediana das idades
+median(treino$Age, na.rm = TRUE)
+
+#Comparando com o summary (Calcula a media já sem os NAs)
+summary(treino$Age)
+```
+### Acertando os valores de na
+```{r Acertando na}
+# Calcular a soma da qtd de na na coluna Age
+sum(is.na(treino$Age))
+sum(is.na(treino$Parch))
+
+# Calcular a qtd total de na no bd em todas as colunas
+colSums(is.na(treino))
+
+# Podemos omitir os valores na do bd ( ele mostra as linhas que foram omitidas - mas nao vamos fazer)
+# na.omit(treino$Age)
+
+```
+### Atribuindo o valor médio das idades para os valores NAs da coluna Age (idade)
+```{r Colocando o valor 29.9}
+#treino$Age[which(is.na(treino$Age))] <- 29.7
+#View(treino)
+```
+
+```{r Colocando o valor media ou mean}
+treino$Age[which(is.na(treino$Age))] <- mean(treino$Age,na.rm = TRUE)
+View(treino)
+```
+
+Não existe outros NAs além da coluna Age, conforme visto acima.  
+  
+### Criando o modelo    
+
+Vamos usar a Regressão Logistica (pois o modelo não é linear)  
+
+```{r Regressao_Logistica1}
+regressao1 <- glm(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked, family=binomial, data=treino)
+
+summary(regressao1)
+```
+### Buscando os resultados da coluna Suvived (sobreviventes)
+
+```{r Buscando os resultados 1}
+resultado1 <- predict(regressao1, newdata = teste)
+resultado1
+```
+### Criando a variavel Survived para a separacao entre 0 e 1  
+  
+```{r criando Survived no bd teste}
+teste$Survived <-ifelse(resultado1 <=0.5, 0, 1)
+
+head(resultado1,10)
+head(teste$Survived,10)
+```
+### Criando o arquivo csv  
+  
+```{r criando csv}
+write.csv(teste, 'predicao1.csv')
+```
+  
+
+
