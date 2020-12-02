@@ -1,0 +1,307 @@
+---
+title: "Trilha3-Explorando a Base de Dados diamonds do pacote ggplot2"
+author: "André Gustavo Silva Lovo"
+date: "07/11/2020"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
+---
+# Trilha3
+```{r}
+#install.packages("readr", dependencies = TRUE)
+library(readr) 
+#install.packages("data.table", dependencies = TRUE)
+library(data.table)
+#install.packages("knitr")
+library(knitr)
+#install.packages("tinytex")
+tinytex::install_tinytex()
+#install.packages("ggplot2", dependencies = TRUE)
+#install.packages("dplyr", dependencies = TRUE)
+library(dplyr) 
+#install.packages("tidyr", dependencies = TRUE)
+library(tidyr)
+
+```
+
+## Para esta atividade de AED (Análise Exploratória de Dados) vamos seguir o seguinte checklist:
+
+![checklist](check_list.jpg)
+
+
+```{r}
+library(ggplot2)
+diamantes <- data(diamonds)
+```
+# Dados e informações do Banco de dados diamonds:
+price: preço em dólares americanos ($326–$18,823)   
+carat: peso do diamente (0.2–5.01)   
+cut:qualidade do corte (Fair, Good, Very Good, Premium, Ideal)   
+color: cor do diamante, indo de J (pior) a D (melhor)   
+clarity: medida de quão claro é o diamante (I1 (pior), SI2, SI1, VS2, VS1, VVS2, VVS1, IF (melhor))   
+x: comprimento em mm (0–10.74)   
+y: largura em mm (0–58.9)   
+z: profundidade em mm (0–31.8)   
+depth: percentual de profundidade total = z / mean(x, y) = 2 * z / (x + y) (43–79)  
+table: largura do topo do diamante relativo ao ponto mais largo (43–95)   
+
+Como pode ser observado a tabela apresenta as seguintes variáveis para a quantificação e qualificação de uma tabela com características para os diamantes:  
+Preço - peso - qualidade do corte - claridade - comprimento - largura - profundidade - profundidade total em porcentagem - relação de largura entre o topo e a parte mais larga.
+
+```{r Quantidade de linhas e colunas da tabela}
+dim(diamonds)
+```
+## Investigando e analisando a base de dados:
+### Qual é a estrutura do conjunto de dados “diamantes”?
+```{r}
+View (diamonds)
+```
+```{r Analisando todas as colunas}
+typeof(diamonds$price)
+typeof(diamonds$carat)
+typeof(diamonds$cut)
+typeof(diamonds$color)
+typeof(diamonds$clarity)
+typeof(diamonds$depth)
+typeof(diamonds$table)
+typeof(diamonds$x)
+typeof(diamonds$y)
+typeof(diamonds$z)
+```
+```{r}
+str(diamonds)
+```
+
+```{r}
+View(diamonds)
+```
+### Explore a parte inicial e a final do conjunto de dados.
+```{r Explore a parte inicial e a final do conjunto de dados.}
+head(diamonds,5)
+```
+```{r}
+tail(diamonds,10)
+```
+### Faça alguns sumários estatísticos para entender melhor a base de dados.
+```{r Faça alguns sumários estatísticos para entender melhor a base de dados}
+summary(diamonds)
+```
+
+## Analisando a tabela e suas colunas:  
+Coluna price: preço em dólares americanos-  
+R:(Atributo tipo numérico inteiro)   
+Coluna carat: peso do diamente-  
+R:(Atributo tipo numérico double com casas decemais)    
+Coluna cut:qualidade do corte (Fair, Good, Very Good, Premium, Ideal)-  
+R:(Atributo tipo Factor - categórico ou qualitativo)   
+Coluna color: cor do diamante, indo de J (pior) a D (melhor)-  
+R:(Atributo tipo Factor - categórico ou qualitativo)   
+Coluna clarity: medida de quão claro é o diamante-  
+R:(Atributo tipo Factor - categórico ou qualitativo)   
+Coluna depth: percentual de profundidade total-  
+R:(Atributo tipo numérico double com casas decemais)  
+Coluna table: largura do topo do diamante relativo ao ponto mais largo-  
+R:(Atributo tipo numérico double com casas decemais)   
+Coluna x: comprimento em mm-    
+R:(Atributo tipo numérico double com casas decemais)  
+Coluna y: largura em mm-  
+R:(Atributo tipo numérico double com casas decemais)    
+Coluna z: profundidade em mm-  
+R:(Atributo tipo numérico double com casas decemais)   
+
+### A saída da função summary() está de acordo com a descrição mostrada anteriormente?
+As colunas que são do tipo numéricos (inteiros e/ou double com casas decimais) e seus resultados estão de acordo com a função summary ,pois apresntam tipos numéricos.
+Ex.:carat, price, depth, table, x,y,z.    
+Já as colunas que são do tipo caracteres (factor ordinais - são do tipo categórico), não estão de acordo com a função summary.  
+Ex.:cut, color, clarity.
+
+## Resumo do Banco de Dados
+Usamos esta biblioteca para visualizarmos de forma global a tabela e suas colunas(variáveis).
+```{r}
+#install.packages("skimr")
+library(skimr)
+skim(diamonds)
+#O comando skim é interessante, porque além do sumário numérico, também temos um pequeno histograma para vermos a distribuição dos dados.  
+# Vamos analisar as variáveis contínuas (numéricas) através dos histogramas. 
+```
+## Gráfico Histograma
+### Explorando a variável carat, através do histograma.
+```{r Explorando a variável carat, através do histograma.}
+hist(diamonds$carat)
+ggplot(diamonds, aes(x = carat)) + geom_histogram(bins=30, color = "white", fill = "lightblue")
+```
+### Análise:
+Acima fizemos a comparação da distribuição dos pesos dos diamantes conforme a faixa das quantidades, usando o histograma.
+
+### Explorando a variável depth, através do histograma.
+```{r ### Explorando a variável depth, através do histograma.}
+hist(diamonds$depth)
+ggplot(diamonds, aes(x = depth)) + geom_histogram(bins=30, color = "white", fill = "green")
+```
+### Análise:
+Acima fizemos a comparação da distribuição das profundidades (em porcentagem) dos diamantes conforme a faixa das quantidades, usando o histograma.
+
+### Explorando a variável table, através do histograma.
+```{r Explorando a variável table, através do histograma.}
+hist(diamonds$table)
+ggplot(diamonds, aes(x = table)) + geom_histogram(bins = 30, color = "white", fill = "red")
+```
+### Análise:
+Acima fizemos a comparação da distribuição das larguras (mm) dos diamantes conforme a faixa das quantidades, usando o histograma.
+
+### Explorando a variável price, através do histograma.
+```{r Explorando a variável price, através do histograma.}
+hist(diamonds$price)
+ggplot(diamonds, aes(x = price)) + geom_histogram(bins = 30, color = "white", fill = "orange")
+```
+### Análise:
+Acima fizemos a comparação da distribuição dos preços (dólares americanos) dos diamantes conforme a faixa das quantidades, usando o histograma.
+
+###Explorando a variável x, através do histograma.
+```{r Explorando a variável x, através do histograma.}
+hist(diamonds$x)
+ggplot(diamonds, aes(x = x)) + geom_histogram(bins=30, color = "white", fill = "purple")
+```
+### Análise:
+Acima fizemos a comparação da distribuição do comprimento (mm) dos diamantes conforme a faixa das quantidades, usando o histograma.
+
+###Explorando a variável y, através do histograma.
+```{r Explorando a variável y, através do histograma.}
+hist(diamonds$y)
+ggplot(diamonds, aes(x = y)) + geom_histogram(bins=30, color = "white", fill = "blue")
+```
+### Análise:
+Acima fizemos a comparação da distribuição da largura (mm) dos diamantes conforme a faixa das quantidades, usando o histograma.
+
+###Explorando a variável z, através do histograma.
+```{r Explorando a variável z, através do histograma.}
+hist(diamonds$z)
+ggplot(diamonds, aes(x = z)) + geom_histogram(bins = 30, color = "white", fill = "red")
+```
+### Análise:
+Acima fizemos a comparação da distribuição da profundidade (mm) dos diamantes conforme a faixa das quantidades, usando o histograma.
+
+## Gráfico Boxplot
+### Explore a variável price, seguindo o modelo de exploração.
+Vamos analisar as variáveis de forma separada utilizando o gráfico Boxplot.
+```{r Explorando a variável price:}
+#Boxplot para variáveis numéricas (devido a separação dos quartis)
+ggplot(data = diamonds, mapping = aes(x = cut, y = price, fill =cut)) + geom_boxplot(outlier.color = "red")
+#xlab("Qualidade do corte") + ylab("Preço(Dólares americanos)")
+ggplot(data = diamonds, mapping = aes(x = color, y = price, fill =color)) + geom_boxplot(outlier.color = "red")
+#xlab("Cor") + ylab("Preço(Dólares americanos)")
+ggplot(data = diamonds, mapping = aes(x = clarity, y = price, fill =clarity)) + geom_boxplot(outlier.color = "red")
+#xlab("Quão claro é o diamante") + ylab("Preço(Dólares americanos)")
+```
+### Análise:
+Acima fizemos a comparação dos preços dos diamantes conforme a qualidade do corte, cor e claridade (transparencia do diamante).
+O tipo de corte que mais influencia o preço é o corte premium.
+A qualidade de cor que mais influencia o preço é a cor J (pior cor).
+A claridade (transparência) que mais influencia o preço são as claridades VS1 e VS2.
+
+### Explore a variável carat, seguindo o modelo de exploração.
+```{r Explorando a variável carat.}
+ggplot(data = diamonds, mapping = aes(x = cut, y = carat, fill =cut )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = color, y = carat, fill =color )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = clarity, y = carat, fill =clarity )) + geom_boxplot(outlier.color = "red")
+```
+### Análise:
+Acima fizemos a comparação do peso dos diamantes conforme a qualidade do corte, cor e claridade (transparencia do diamante).
+O tipo de corte que mais influencia o peso é o corte premium.
+A qualidade de cor que mais influencia o peso é a cor J (pior cor).
+A claridade (transparência) que mais influencia o peso é a I1 (pior).
+
+### Explore a variável depth, seguindo o modelo de exploração.
+```{r Explorando a variável depth.}
+ggplot(data = diamonds, mapping = aes(x = cut, y =depth , fill =cut )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = color, y =depth , fill =color )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = clarity, y =depth , fill =clarity )) + geom_boxplot(outlier.color = "red")
+```
+### Análise:
+Acima fizemos a comparação da porcentagem de profundidade dos diamantes conforme a qualidade do corte, cor e claridade (transparencia do diamante).
+O tipo de corte que mais influencia o a profundidade é o Fair.
+A qualidade de cor que mais influencia a profundidade E, G e J,pois apresentam valores outliers, embora todas sejam muito parecidos em sua mediana.
+A claridade (transparência) que mais influencia a profundidade é a I1, embora todas sejam muito parecidos em sua mediana.
+
+### Explore a variável table, seguindo o modelo de exploração.
+```{r Explorando a variável table}
+ggplot(data = diamonds, mapping = aes(x = cut, y =table , fill =cut )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = color, y =table , fill =color )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = clarity, y =table , fill =clarity )) + geom_boxplot(outlier.color = "red")
+```
+### Análise:
+Acima fizemos a comparação da largura do topo do diamante relativo ao ponto mais largo dos diamantes conforme a qualidade do corte, cor e claridade (transparencia do diamante).
+O tipo de corte que mais influencia a largura do topo do diamante relativo ao ponto mais largo é o corte Fair, embora as medianas sejam muito próximas.
+A qualidade de cor que mais influencia a largura do topo do diamante relativo ao ponto mais largo é a cor F, embora as medianas sejam muito próximas.
+A claridade (transparência) que mais influencia largura do topo do diamante relativo ao ponto mais largo é a transparência SI1, embora as medianas sejam muito próximas.
+
+### Explore a variável z, seguindo o modelo de exploração.
+```{r Explorando a variável z}
+ggplot(data = diamonds, mapping = aes(x = cut, y =z , fill =cut )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = color, y =z , fill =color )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = clarity, y =z , fill =clarity )) + geom_boxplot(outlier.color = "red")
+```
+### Análise:
+Acima fizemos a comparação da profundidade dos diamantes conforme a qualidade do corte, cor e claridade (transparencia do diamante).
+O tipo de corte que mais influencia a profundidade é o corte premium, embora as medianas sejam muito próximas.
+A qualidade de cor que mais influencia a profundidade é a cor J,embora as medianas sejam muito próximas.
+A claridade (transparência) que mais influencia a profundidade é a SI2, embora as medianas sejam muito próximas.
+
+### Explore a variável x, seguindo o modelo de exploração.
+```{r Explorando a variável x}
+ggplot(data = diamonds, mapping = aes(x = cut, y =x , fill =cut )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = color, y =x , fill =color )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = clarity, y =x , fill =clarity )) + geom_boxplot(outlier.color = "red")
+```
+### Análise:
+Acima fizemos a comparação do comprimento dos diamantes conforme a qualidade do corte, cor e claridade (transparencia do diamante).
+O tipo de corte que mais influencia o comprimento dos diamantes é o premium, embora as medianas sejam muito próximas.
+A qualidade de cor que mais influencia o comprimento dos diamantes é a cor J (pior cor),embora as medianas sejam muito próximas.
+A claridade (transparência) que mais influencia o comprimento dos diamantes é a I1, embora todas sejam muito parecidos em sua mediana.
+
+### Explore a variável y, seguindo o modelo de exploração.
+```{r Explorando a variável y}
+ggplot(data = diamonds, mapping = aes(x = cut, y =y , fill =cut )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = color, y =y , fill =color )) + geom_boxplot(outlier.color = "red")
+ggplot(data = diamonds, mapping = aes(x = clarity, y =y , fill =clarity )) + geom_boxplot(outlier.color = "red")
+```
+### Análise:
+Acima fizemos a comparação da largura dos diamantes conforme a qualidade do corte, cor e claridade (transparencia do diamante).
+O tipo de corte que mais influencia a largura dos diamantes é o premium, embora as medianas sejam muito próximas.
+A qualidade de cor que mais influencia a largura dos diamantes é a cor J (pior cor),embora as medianas sejam muito próximas.
+A claridade (transparência) que mais influencia a largura dos diamantes é a I1, embora todas sejam muito parecidos em sua mediana.
+
+## Gráfico de Barras
+
+```{r Explorando a variável preço}
+ggplot(diamonds, aes(y = price, x = cut)) + geom_bar(stat = "identity", fill = "tomato")
+ggplot(diamonds, aes(y = price, x = color)) + geom_bar(stat = "identity", fill = "blue")
+ggplot(diamonds, aes(y = price, x = clarity)) + geom_bar(stat = "identity", fill = "yellow")
+```
+### Análise:
+Acima fizemos a comparação do preço dos diamantes conforme a qualidade do corte, cor e claridade (transparencia do diamante).
+O tipo de corte que mais influencia o preço dos diamantes é o Ideal.
+A qualidade de cor que mais influencia o preço dos diamantes é a cor G.
+A claridade (transparência) que mais influencia o preço dos diamantes é o SI1.
+
+## Scatterplot (Gráfico de Dispersao)
+
+```{r Explorando a variável preço com o peso x largura x profundidade}
+ggplot(diamonds, aes(x=price, y=carat)) + geom_point(color="yellow")
+ggplot(diamonds, aes(x=price, y=y)) + geom_point(color="blue")
+ggplot(diamonds, aes(x=price, y=z)) + geom_point(color="green")
+ggplot(diamonds, aes(x=price, y=x)) + geom_point(color="purple")
+ggplot(diamonds, aes(x=price, y=depth)) + geom_point(color="orange")
+```
+
+```{r}
+#preço x peso x corte
+ggplot (diamonds, aes (x = price, y = carat)) + geom_point (aes (color = factor (cut)))
+#preço x comprimento x cor
+ggplot (diamonds, aes (x = price, y = x)) + geom_point (aes (color = factor (color)))
+#preço x largura x "transparencia ou claridade"
+ggplot (diamonds, aes (x = price, y = table)) + geom_point (aes (color = factor (clarity)))
+```
+

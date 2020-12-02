@@ -1,0 +1,611 @@
+---
+title: "Trilha_4"
+author: "André Gustavo Silva Lovo"
+date: "11/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Regressão Linear - Trilha 4
+
+### Problema 1:  
+Para uma amostra de oito operadores de máquina, foram coletados o número de horas de treinamento (x) e o tempo necessário para completar o trabalho (y). Os dados coletados encontram-se na tabela abaixo:
+
+```{r Exercicio_1}
+x <- c(5.2, 5.1, 4.9, 4.6, 4.7, 4.8, 4.6, 4.9)
+y <- c(13, 15, 16, 20, 19, 17, 21, 16)
+
+c <- cbind(x,y)#Acopla duas tabelas lado a lado
+
+#Transformando a tabela em um dataframe
+c <- as.data.frame(c)
+
+#Renomeando as colunas
+colnames(c) <- c('treinamento','resultado')
+View(c)
+
+```
+Com estes dados, faça:
+
+a) Um gráfico de dispersão para os dados
+```{r gráfico de dispersão para os dados}
+plot(c, col="red", pch=20, lwd=4)#, xlim=c(-1,6), ylim=c(0,75))
+```
+
+
+R) Vemos uma correlação inversamente proporcional entre treinamento e resultado, pois conforme x aumenta, mais o y diminui.  
+b) Determine o modelo de regressão linear simples entre as variáveis x e y, sendo y a variável resposta.  
+$$Y = \alpha + \ beta * X $$ 
+```{r Modelo de Regressao 1}
+regressao <- lm(c$resultado ~ c$treinamento)
+regressao$coefficients[1]#ponto de interceptacao da minha reta no eixo y
+regressao$coefficients[2]#coeficiente angular
+```
+
+c) Faça uma análise do modelo de regressão utilizando a função summary:  
+resíduos, significância estatística dos coeficientes, percentual de variância explicada pelo modelo.
+  
+```{r Summary}
+summary(regressao)
+```
+Através do gráfico, podemos ver se:  
+Os valores Min e Max são simétricos (aproximadamente);
+O valor de R-squared, neste caso, explica 94.8% da variabiliade da minha variável resposta.  
+Quão bem o meu modelo explica o meu conjunto de dados.  
+
+d) Trace, no gráfico anterior, a reta de regressão.  
+```{r Graficos 1}
+par(mfrow=c(2,2))
+plot(regressao)
+par(mfrow=c(1,1))
+```
+```{r Grafico Regressao}
+plot(c, col="red", pch=20)#,lwd=4, xlim=c(-1,6), ylim=c(0,75))
+abline(regressao, col="green", lwd=4)
+```
+```{r}
+X <- 4.9
+Y = regressao$coefficients[1] + (regressao$coefficients[2] * X)
+
+Y
+```
+
+```{r Linha de comprovacao}
+plot(c, col="red", pch=20)#, lwd=4, xlim=c(-1,6), ylim=c(0,75))
+abline(regressao, col="blue", lwd=4)
+
+abline(v=X)
+abline(h=Y)
+```
+
+
+### Problema 2:  
+O site Gapminder compilou uma base com dados sobre população, expectativa de vida e PIB per capta de 142 países, em 12 anos diferentes.  
+Com estes dados, disponibilizados no arquivo pib_gapminder.csv, faça:  
+a) Faça a importação dos dados, verifique a estrutura e faça um sumário estatístico.  
+
+```{r Instalando os pacotes e bibliotecas}
+#install.packages("readr", dependencies = TRUE)
+library(readr) 
+#install.packages("data.table", dependencies = TRUE)
+#library(data.table)
+#install.packages("knitr", dependencies = TRUE)
+library(knitr)
+#install.packages("RMKardown")
+
+#install.packages("tinytex")
+#tinytex::install_tinytex()
+#install.packages("ggplot2", dependencies = TRUE)
+#install.packages("dplyr", dependencies = TRUE)
+library(dplyr) 
+#install.packages("tidyr", dependencies = TRUE)
+library(tidyr)
+#install.packages("plyr")
+library(plyr)
+```
+
+```{r Fazendo a leitura do Banco de Dados}
+arquivo <- 'pib_gapminder.csv'
+dados <- read.csv(arquivo, sep=',')
+df_dados <- as.data.frame(read.csv(arquivo, sep=','))
+```
+```{r Verificando o inicio e o final do Banco de Dados}
+head(as.matrix(df_dados,7))  
+tail(as.matrix(df_dados,7))
+```
+
+```{r Ver o Banco de Dados}
+View(df_dados)
+```  
+
+```{r Vendo o tipo de dados}
+typeof(df_dados$pais)
+typeof(df_dados$ano)
+typeof(df_dados$pop)
+typeof(df_dados$continente)
+typeof(df_dados$expVida)
+typeof(df_dados$pibPercap)
+```
+b) Verifique a estrutura dos dados (str)
+```{r Verificando a estrutura do Banco de Dados}
+str(df_dados)
+```
+```{r}
+#install.packages("skimr")
+library(skimr)
+skim(df_dados)
+```
+
+c) Classifique cada variável de acordo com seu tipo (qualitativa ordinal, nominal, quantitativa discreta, contínua, etc). 
+pais: Nominal - caractere  
+ano: Numérica - Intervalar  
+pop: Numérica - Razao  
+continente: Nominal - caractere  
+expVida: Numerica - Razao  
+pibPercap: Numerica - Razao  
+
+d) Faça um sumário estatístico dos dados  
+```{r Sumario estatistico}
+summary(df_dados)
+```  
+e) Faça uma tabela de frequência absoluta e uma tabela de frequência relativa para verificar o número de observações por continente.
+```{r Frequencia absoluta e Frequencia relativa em R}
+library(dplyr)
+#library(plyr)
+
+# 1 Criando a tabela frequencia absoluta - tfabs
+tfabs <- table(df_dados$continente)
+tfabs
+#view(tfabs)
+
+#frequencia absoluta - fabs
+fabs = count(dados, 'continente')
+#view(fabs)
+
+# 2 Criando uma tabela com a frequencia relativa - tfrel
+tfrel <- prop.table(tfabs)
+tfrel
+#view(tfrel)
+```
+
+f) Faça um gráfico de barras da tabela de frequência absoluta dos continentes.
+```{r Criando o gráfico de barras}
+library(ggplot2)
+ggplot(fabs, aes(y = freq , x = continente)) + geom_bar(stat = "identity", fill = "yellow")
+```
+  
+  
+g) Faça um gráfico apropriado para relacionar o PIB per capta à expectativa de vida.  
+```{r PIB per capta x Expectativa de vida}
+#install.packages("ggplot2", dependencies = TRUE)
+library(ggplot2)
+ggplot(df_dados, aes(x=pibPercap, y=expVida)) + geom_point(color="orange")
+ggplot(df_dados, aes(x=expVida, y=pibPercap)) + geom_point(color="green")
+ggplot(df_dados, aes(x = pibPercap)) + geom_histogram(bins = 30, color = "white", fill = "red")
+ggplot(df_dados, aes(x = expVida)) + geom_histogram(bins = 30, color = "white", fill = "blue")
+```
+  
+  
+h) Crie duas novas colunas nesta base de dados com o logaritmo de PIB per capta, e o logaritmo da expectativa de vida. Estas colunas devem ter os nomes: lpibPercap e lexpVida, respectivamente.  
+
+```{r Craindo duas colunas no banco de dados df_dados}
+lpibPercap <- log(df_dados$pibPercap)
+lexpVida <- log(df_dados$expVida)
+```
+
+```{r Adicionando as colunas no BD}
+# Adicionando as colunas - Para adicionar os valores deve-se utilizar o argumento concatenate, representado pela letra c 
+df_dados["lpibPercap"] <- c(lpibPercap)
+df_dados["lexpVida"] <- c(lexpVida)
+
+#view(df_dados)
+```
+i) Faça um gráfico apropriado para relacionar estas duas novas variáveis.  
+
+```{r Adicionando o gráfico}
+library(skimr)
+skim(df_dados)
+```
+  
+  
+```{r Adicionando os graficos do histograma e distribuicao para as duas variáveis numerica}
+ggplot(df_dados, aes(x=lexpVida, y=lpibPercap)) + geom_point(aes (color= factor(continente)))
+ggplot(df_dados, aes(x=lpibPercap, y=lexpVida)) + geom_point(aes (color= factor(continente)))
+ggplot(df_dados, aes(x = lexpVida)) + geom_histogram(bins = 30, color = "white", fill = "blue")
+ggplot(df_dados, aes(x = lpibPercap)) + geom_histogram(bins = 30, color = "white", fill = "orange")
+```
+
+  
+```{r Comparando os gráficos}
+par(mfrow=c(1,2))
+
+plot(df_dados$pibPercap, df_dados$expVida, pch=20, col=as.factor(df_dados$continente), main='Original')
+plot(df_dados$lpibPercap, df_dados$lexpVida, pch=20, col=as.factor(df_dados$continente), main='Logaritmo')
+
+par(mfrow=c(1,1))
+```
+Podemos ver que as escalas são diferentes, para podermos ler e entender melhor os dados.      
+
+j) Ajuste um modelo linear aos dados, utilizando as duas novas variáveis criadas, sendo lexpVida a variável resposta.  
+
+```{r Ajusatndo o modelo linear dos dados}
+# Coletando as colunas e criando um dataframe
+
+x <- c(df_dados$lpibPercap)
+y <- c(df_dados$lexpVida)
+
+#Acoplando duas tabelas lado a lado
+c <- cbind(x,y)
+
+#Transformando a tabela em um dataframe
+c <- as.data.frame(c)
+
+#Renomeando as colunas
+colnames(c) <- c('lpibPercap','lexpVida')
+View(c)
+```
+
+```{r Fazendo o Gráfico de Dispersão dos Dados}
+gd <- ggplot(data = c, aes(x = lpibPercap, y = lexpVida)) + geom_point() + labs(x = "PIB per capta", y = "expectativa de vida") + theme_bw()
+gd
+```
+  
+  
+R) Podemos ver uma correlação diretamento proporcional entre o lpibPercap e lexpVida.  
+
+O modelo de regressão linear simples entre as variáveis x e y, sendo y a variável resposta.  
+$$Y = \alpha + \ beta * X$$ 
+
+```{r Modelo de Regressao 2}
+# lexpVida é explicada por lpibPercap
+mr <- lm(c$lexpVida ~ c$lpibPercap, data = c)
+summary(mr)
+```
+  
+k) Faça todas as análises da regressão, julgando:  
+Os gráficos diagnósticos  
+
+```{r Adicionando os gráficos}
+#plot(c, col="yellow", pch=20)
+
+gd + geom_smooth(method = "lm", 
+                formula = y ~ x)
+```
+  
+Os parâmetros obtidos (avaliar o summary do modelo)  
+
+```{r Adicionando o summary}
+summary(mr)
+```
+  
+O poder de explicação do modelo.  
+R) Para a construção do modelo, usamos um banco de dados construido através de duas variaveis.  
+Usamos a variável explicatica x =lpibPercap (valor finaceiro) e a variável resposta y =lexpVida (expectativa), sendo estas duas variáveis numéricas.  
+A variável explicativa x nos ajuda a explicar e a justificar o valor da variável y, resposta.  
+De acordo com as variáveis explicativas usamos um método estatístico mais apropriado:  
+Variáveis explicativa: Contínuas - Método estatístico: Regressão  
+Variáveis explicativa: categóricas- Método estatístico: Análise de Variância (ANOVA)
+Variáveis explicativa: Contínuas ou categóricas - Método estatístico: Análise de Covariância (ANCOVA)  
+  
+Mas de acordo com a variável resposta usamos um método estatístico mais apropriado:   
+Variáveis resposta: Contínuas - Método estatístico: Regressão, ANOVA, ANCOVA  
+Variáveis resposta: Proporção - Método estatístico: Regressão Logística  
+Variáveis resposta: Contagem - Método estatístico: Modelos log-linear (Poisson)
+Variáveis resposta: Binárias - Método estatístico: Regressão Logística Binária
+Variáveis resposta: Tempo da morte - Método estatístico: Análise de sobrevivência
+  
+    
+O nosso objetivo é determinar os valores dos parâmetros de um modelo específico que levam ao melhor ajuste do modelo aos dados que pode nos ajudar (por exemplo) na previsão de eventos futuros.  
+  
+  
+A regressão que estamos analisando é uma regressão simples ou seja x=1 (lpibPercap).  
+  
+Para o modelo abaixo, queremos entender os parâmetros alpha e beta, os quais nos ajuda a entender o valor da variável resposta. 
+$$Y = \alpha + \ beta * X$$ 
+
+Hipóteses ou condições para aplicação dos mínimos quadrados para determinarmos os parâmetros do modelo:  
+O valor de y para cada valor de x, deve ter uma distribuição normal;  
+Os valores medidos de y são independendes em seus valores;  
+Como o nosso modelo é uma reta, temos que ter linearidade no comportamento de x e y;  
+Homocedasticidades 
+    
+Para a análise e explicação do modelo, verificamos os seguintes pontos:  
+Min = -0.67059 (Simétrico ao valor Max)
+Mediana = 0.01978 (Deve estar muito próxima do valor zero (0))
+Max =  0.36156 (Simétrico ao valor Min)
+
+(Intercept) = 2.864177 (Ponto de intersecção da reta da equação com o eixo y.)  
+  
+lexpVida = 0.146549 (Este valor é a tangente do angulo da reta com o eixo x.)  
+  
+p-value: < 2 e-16  (Mostra a confiabilidade da nossa estimativa - aceitar ou rejeitar a hipótese padrão).  
+O valor de aceite ou rejeição do modelo é de no máximo 5%  estando este valor (2.2e-16) na região de rejeição da hipótese nula ou seja o valor resposta não é obtido de forma aleatória ou em função do acaso. 
+
+Adjusted R-squared (ajustado):  0.613 -  (Responde, em porcentagem, o quão bem o nosso modelo explica o que está acontecendo com o nosso conjunto de dados, no caso com a nossa variável resposta).  
+
+P-value para o modelo como um todo: 2.2e-16 - (Responde também que os nossos dados resposta não são obtidos aleatóriamente e que tem uma relação entre eles).
+
+
+O modelo segue as premissas do método dos Mínimos Quadrados?
+  
+```{r Graficos 2}
+par(mfrow=c(2,2))
+plot(mr)
+par(mfrow=c(1,1))
+```  
+  
+No gráfico Residuals (Resíduo)x Fitted(Ajustes do modelo) temos uma variância constante, pois queremos saber se conforme aumentam os valores ajustados, os valores do resíduo se mantem constantes. Assim temos homocedasticidade no nosso conjunto de dados.  
+Podemos ver no QQ Plot como estão as distribuições dos resíduos. Podemos ver no gráfico que existem alguns pontos que estão saindo da reta tracejada(reta normal dos resíduos), assim  os resíduos não tem uma distribuição normal.  
+
+R quadrado ajustado também indica quão bem os termos ajustam uma curva ou linha, mas ele ajusta o número de termos em um modelo. Se você adiciona mais e mais variáveis explicativas inúteis a um modelo, o r quadrado ajustado vai diminuir. Se você adiciona mais variáveis explicativas úteis, o r quadrado ajustado vai aumentar.  
+  
+
+### Problema 3:  
+Neste exercício vamos fazer uma análise de regressão com a base de dados autos.csv para tentar prever o preço de carro a partir de sua potência. Na nossa base de dados, estas variáveis são horsepower e price.  
+  
+http://archive.ics.uci.edu/ml/datasets/Automobile  
+
+Utilizando então a base disponibilizada, você deve:  
+a) Criar um dicionário de dados, para entender o significado o tipo de cada variável; veja no link fornecido se há documentação disponível.  
+R) Criando o dicionário e alterando o nome das colunas:  
+
+make: fabricante (alfa-romero, audi, bmw, chevrolet, dodge, honda, isuzu, jaguar, mazda, mercedes-benz, mercury, mitsubishi, nissan, peugot, plymouth, porsche, saab, subaru, toyota, volkswagen, volvo)  
+fuel.type: tipo_combustivel (gas, diesel)  
+aspiration: aspiracao ar (std, turbo)  
+num.doors: qtd_portas (2, 4)  
+body.style: estilo (convertible, hatchback, sedan, wagon, hardtop)  
+drive.wheels: tracao_roda (rwd, fwd, 4wd)   
+engine.location:posicao_do_motor (front, rear)  
+wheel.base: distancia_entre_eixos (tipo numérico continuo)  
+length: comprimento (tipo numérico continuo)  
+width: largura (valor numerico)  
+height: altura (valor numerico)  
+curb.weight: peso_do_carro_vazio (tipo numérico continuo)  
+engine.type: tipo_do_motor (dohc, ohcv, ohc,"l",ohcf)  
+num.cylinders: número_de_cilindros (4, 6, 5, 3, 12, 8)  
+engine.size: tamanho_do_motor (tipo numérico continuo)  
+fuel.system: sistema_de_combustivel (mpfi, 2bbl, mfi, 1bbl, spfi, idi, spdi)  
+bore: diametro_cilindro (tipo numérico continuo)  
+stroke: ciclos_pistao (tipo numérico continuo)  
+compression.ratio:taxa_compressao (tipo numérico continuo)  
+horsepower:potencia (tipo numérico continuo - hp)  
+peak.rpm: rotacao maxima (tipo numérico continuo - rpm)  
+city.mpg: gasto_combustivel_cidade (tipo numérico continuo - milhas por galao)  
+highway.mpg: gasto_combustivel_estrada (tipo numérico continuo - milhas por galao)  
+price: preco (tipo numérico continuo - moeda local)
+
+Esse conjunto de dados consiste em três tipos de entidades:  
+(a) a especificação de um automóvel em termos de várias características,   
+(b) sua classificação de risco de seguro atribuída,  
+(c) suas perdas normalizadas em uso em comparação com outros carros. 
+A segunda classificação corresponde ao grau em que o automóvel é mais arriscado do que seu preço indica. Os carros recebem inicialmente um símbolo de fator de risco associado ao seu preço. Então, se for mais arriscado (ou menos), este símbolo é ajustado movendo-o para cima (ou para baixo) na escala. Os atuários chamam esse processo de "simbolização". Um valor de +3 indica que o automóvel é arriscado, -3 que provavelmente é bastante seguro.  
+
+O terceiro fator é o pagamento de perda média relativa por ano de veículo segurado. Este valor é normalizado para todos os automóveis dentro de uma determinada classificação de tamanho (pequeno de duas portas, peruas, esportes / especialidade, etc ...) e representa a perda média por carro por ano.  
+
+Nota: Vários dos atributos no banco de dados podem ser usados como um atributo de "classe".
+  
+b) Carregar a base para o R, certificando-se de que os dados estão corretos, de acordo com o dicionário de dados.
+```{r Carregando a base de dados}
+carro <- read.csv2('autos.csv')
+```
+
+```{r Verificando o Banco de Dados}
+head.matrix(carro,7)
+tail(carro,7)
+```
+
+```{r Analisando a extrutura do BD}
+str(carro)
+```
+  
+```{r Quantidade de linhas e colunas da tabela}
+dim(carro)
+```
+
+```{r Vendo a tabela carro}
+#view(carro)
+```
+
+```{r Detalhes do bd carro }
+library(skimr)
+skim(carro)
+```
+  
+    
+```{r Verificando o conteudo de marca}
+unique(carro$make)
+```
+
+```{r Verificando o conteudo de tipo de combustivel}
+unique(carro$fuel.type)
+```    
+```{r Verificando o conteudo de tipo de aspiracao}
+unique(carro$aspiration) 
+```
+  
+```{r Verificando o conteudo de tipo de estilo}
+unique(carro$body.style)
+```
+
+```{r Verificando o conteudo de tipo de roda}
+unique(carro$drive.wheels)
+```
+
+```{r Verificando o conteudo de tipo de posicao do motor}
+unique(carro$engine.location)
+```
+
+```{r Verificando o conteudo de tipo de motor }
+unique(carro$engine.type)
+```
+
+```{r Verificando o conteudo de tipo de sistema combustivel}
+unique(carro$fuel.system)
+```
+
+```{r Verificando o conteudo de numero de portas}
+unique(carro$num.doors)
+```
+
+```{r Verificando o conteudo d}
+unique(carro$num.cylinders)
+```
+  
+c) Explore a base de dados:  
+  
+Sumários estatísticos dos dados:  
+  
+```{r Resumo estatistico do bd carro}
+summary(carro)
+```
+  
+Tabelas quando apropriado:  
+### Gráficos de Boxplot  
+Vamos analisar as variáveis de forma separada utilizando o gráfico Boxplot.  
+
+```{r fabricante x preco - estilo x preco - tipo combustivel x preco - tipo de motor x preco}
+library(ggplot2)
+#install.packages("scales")
+library(scales)
+ggplot(data = carro, mapping = aes(x = make, y = price, fill =make)) + geom_boxplot(outlier.color = "red") + theme(axis.text.x = element_text(angle = 90))
+ggplot(data = carro, mapping = aes(x = body.style, y = price, fill =body.style)) + geom_boxplot(outlier.color = "red") + theme(axis.text.x = element_text(angle = 0))
+ggplot(data = carro, mapping = aes(x =fuel.type , y = price, fill =fuel.type)) + geom_boxplot(outlier.color = "red") + theme(axis.text.x = element_text(angle = 0))
+ggplot(data = carro, mapping = aes(x =engine.type , y = price, fill =engine.type)) + geom_boxplot(outlier.color = "red") + theme(axis.text.x = element_text(angle = 0))
+ggplot(data = carro, mapping = aes(x =fuel.system , y = price, fill =fuel.system)) + geom_boxplot(outlier.color = "red") + theme(axis.text.x = element_text(angle = 0))
+ggplot(data = carro, mapping = aes(x =drive.wheels , y = price, fill =drive.wheels)) + geom_boxplot(outlier.color = "red") + theme(axis.text.x = element_text(angle = 0))
+```
+  
+  
+```{r Alterando o tipo dos dados}
+carro$num.doors <- as.character(carro$num.doors)
+
+class(carro$num.doors)
+```
+  
+Gráficos exploratórios apropriados.
+```{r Explorando a variável preço x número de portas}
+ggplot(data = carro, mapping = aes(x =num.doors, y =price , fill =num.doors)) + geom_boxplot(outlier.color = "red") + theme(axis.text.x = element_text(angle = 0))
+```
+  
+    
+### Gráfico de Dispersão 
+```{r Gráfico Dispersao}
+#Consumo combustivel mpg x preco x estilo de carro
+ggplot (carro, aes (x =city.mpg, y = price)) + geom_point (aes (color = factor (body.style)))
+ggplot (carro, aes (x =highway.mpg, y = price)) + geom_point (aes (color = factor (body.style)))
+ggplot (carro, aes (x =horsepower, y = price)) + geom_point (aes (color = factor (body.style)))
+
+```
+
+
+### Gráfico de Barra  
+```{r Gráfico de Barra}
+ggplot(carro, aes(y =price, x =body.style )) + geom_bar(stat = "identity", fill = "yellow")
+ggplot(carro, aes(y =price, x =make )) + geom_bar(stat = "identity", fill = "purple") + theme(axis.text.x = element_text(angle = 60))
+```
+    
+  
+d) Considerando então apenas uma variável preditora (explicativa) no modelo (horsepower), tente ajustar um modelo para explicar o preço (price) dos carros:  
+
+i) Qual sua intuição sobre o relacionamento da “potência” de um carro com o seu preço?  
+
+```{r Ajusatndo o modelo linear dos dados 3}
+# Coletando as colunas e criando um dataframe
+
+x <- c(carro$horsepower)
+y <- c(carro$price)
+
+#Acoplando duas tabelas lado a lado
+potpre<- cbind(x,y)
+
+#Transformando a tabela em um dataframe
+df_potpre <- as.data.frame(potpre)
+
+#Renomeando as colunas
+colnames(df_potpre) <- c('potencia','preco')
+View(df_potpre)
+```
+
+```{r Fazendo o Gráfico de Dispersão dos Dados para Análise}
+g <- ggplot(data = df_potpre, aes(x = potencia, y = preco)) + geom_point() + labs(x = "potencia", y = "preco") + theme_bw()
+g
+```
+  
+  
+Modelo Linear:
+```{r Modelo Linear 3}
+mod <- lm(potencia ~ preco, data = df_potpre)
+summary(mod)
+```
+  
+  
+Tracando a reta de regressao:
+```{r Tracando a reta de regressao}
+g + geom_smooth(method = "lm", 
+                formula = y ~ x)
+```
+  
+  R) Para a construção do modelo, usamos um banco de dados construido através de duas variaveis.  
+Usamos a variável explicatica x =potencia ou horsepower e a variável resposta y = preco, sendo estas duas variáveis numéricas.  
+A variável explicativa "x" deve nos ajuda a explicar e a justificar o valor da variável "y", resposta.  
+
+De acordo com as variáveis explicativas usamos um método estatístico mais apropriado:  
+Variáveis explicativa: Contínuas - Método estatístico: Regressão  
+Variáveis explicativa: categóricas- Método estatístico: Análise de Variância (ANOVA)
+Variáveis explicativa: Contínuas ou categóricas - Método estatístico: Análise de Covariância (ANCOVA)  
+  
+Mas de acordo com a variável resposta usamos um método estatístico mais apropriado:   
+Variáveis resposta: Contínuas - Método estatístico: Regressão, ANOVA, ANCOVA  
+Variáveis resposta: Proporção - Método estatístico: Regressão Logística  
+Variáveis resposta: Contagem - Método estatístico: Modelos log-linear (Poisson)
+Variáveis resposta: Binárias - Método estatístico: Regressão Logística Binária
+Variáveis resposta: Tempo da morte - Método estatístico: Análise de sobrevivência
+  
+    
+O nosso objetivo é determinar os valores dos parâmetros de um modelo específico que levam ao melhor ajuste do modelo aos dados que pode nos ajudar (por exemplo) na previsão de eventos futuros.  
+  
+  
+A regressão que estamos analisando é uma regressão simples ou seja x=1.  
+  
+Para o modelo abaixo, queremos entender os parâmetros alpha e beta, os quais nos ajuda a entender o valor da variável resposta. 
+$$Y = \alpha + \ beta * X$$ 
+
+Hipóteses ou condições para aplicação dos mínimos quadrados para determinarmos os parâmetros do modelo:  
+O valor de y para cada valor de x, deve ter uma distribuição normal;  
+Os valores medidos de y são independendes em seus valores;  
+Como o nosso modelo é uma reta, temos que ter linearidade no comportamento de x e y;  
+Homocedasticidades; 
+    
+Para a análise e explicação do modelo, verificamos os seguintes pontos:  
+Min = -50.770 (Simétrico ao valor Max)
+Mediana = -4.017 (Deve estar muito próxima do valor zero (0))
+Max = 72.064 (Simétrico ao valor Min)
+
+
+
+f) Interprete os resultados do ajuste:  
+Em que posição a reta corta o eixo Y? Isso faz sentido?  
+
+(Intercept) = 52.830763 (Ponto de intersecção da reta da equação com o eixo y.)  
+  
+preco = 0.003813 (Este valor é a tangente do angulo da reta gerada com o eixo x.)  
+  
+p-value: < 2e-16  (Mostra a confiabilidade da nossa estimativa - aceitar ou rejeitar a hipótese padrão).  
+O valor de aceite ou rejeição do modelo é de no máximo 5%  estando este valor (2.2e-16) na região de rejeição da hipótese nula ou seja o valor resposta não é obtido de forma aleatória ou em função do acaso. 
+
+
+g) Analise: Será que apenas a potência de um carro é suficiente para termos uma boa previsão do preço deste carro?
+O que indica isso no seu ajuste?  
+
+Adjusted R-squared (ajustado):  0.6583 - 65.8% (Responde, em porcentagem, o quão bem o nosso modelo explica o que está acontecendo com o nosso conjunto de dados, no caso com a nossa variável resposta).  
+R quadrado ajustado também indica quão bem os termos ajustam uma curva ou linha,mas ele ajusta o número de termos em um modelo. Se você adiciona mais e mais variáveis explicativas inúteis a um modelo, o r quadrado ajustado vai diminuir. Se você adiciona mais variáveis explicativas úteis, o r quadrado ajustado vai aumentar.
+
+P-value para o modelo como um todo: 2.2e-16 - (Responde também que os nossos dados resposta não são obtidos aleatóriamente e que tem uma relação entre eles).
+
+    
+
+
+  
+    

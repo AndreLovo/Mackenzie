@@ -1,0 +1,277 @@
+---
+title: "Resolução dos Exercícios de Análise de Regressão Linear"
+subtitle: "Trilha 04 - Material Complementar"
+author: "Mário O. de Menezes"
+date: "BigData Analytics - Análise Estatística"
+output: 
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Exercícios de Análise de Regressão Linear
+
+
+## Exercício tutoriado de regressão linear {-}
+
+
+
+Um artigo publicado na revista [Technometrics](http://amstat.tandfonline.com/loi/tech), de SC Narula, e JF Wellington (*Prediction, linear regression, and a minimum sum of relative errors*), apresenta dados de preços de vendas e taxas anuais para 24 casas.
+
+#### Dados {-}
+
+Os dados do artigo mencionado estão disponíveis no Moodle: **montgomery_11-4.txt**
+
+Com isso:
+
+- Faça a importação dos dados, verifique sua estrutura e faça um sumário estatístico.
+    + Importação
+    + Estrutura
+    + Sumário
+
+- Faça um gráfico apropriado para relacionar o preço de vendas às taxas pagas (o preço de venda varia conforme as taxas, ou seja, o preço é a **variável dependente**).
+
+
+
+##### Importação dos Dados {-}
+
+Carregando o pacote `tidyverse`
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+Lendo o dataset - dados separados por tabulação
+```{r}
+montgomery <- read_delim("../datasets/montgomery_11-4.txt",delim = "\t")
+```
+
+```{r}
+str(montgomery)
+```
+Aparentemente a leitura foi bem sucedida: duas variáveis numéricas.
+
+Sumário dos dados
+```{r}
+summary(montgomery)
+```
+
+
+#### Ajustando um modelo linear {-}
+
+Como vimos pelas soluções anteriores, primeiro calculamos $\hat{\beta_1}$, e depois $\hat{\beta_0}$. Para facilitar as contas, vamos criar objetos `X` e `Y` com as colunas `Venda` e `Taxa` (saber quem é `X` e quem é `Y` faz parte da interpretação do problema), e `n` que é o tamanho da amostra
+
+
+```{r}
+## Defina X, Y, e n
+X <- montgomery$Taxas
+Y <- montgomery$Venda
+# a função dim retorna as dimensões do objeto: linhas x colunas
+# assim, o primeiro número retornado é o num de linhas, i.e., n
+n <- dim(montgomery)[1]
+```
+
+Agora calculamos $\hat{\beta_1}$ de acordo com as fórmulas anteriores e o exemplo dado
+
+
+```{r tidy=TRUE}
+(SX <- sum(X))
+(SSX <- sum((X - mean(X))^2))
+(SY <- sum(Y))
+(SSY <- sum((Y - mean(Y))^2))
+(SSXY <- sum((X - mean(X))*(Y - mean(Y))))
+```
+
+E agora calculamos os parâmetros:
+
+```{r tidy=TRUE}
+## Crie um objeto chamado beta1
+(beta_1 <- SSXY/SSX)
+```
+E agora calculamos $\hat{\beta_0}$
+
+```{r}
+## Crie um objeto chamado beta0
+(beta_0 <- mean(Y) - beta_1*mean(X))
+```
+
+Para conferir os seus cálculos e prosseguir com a análise, ajuste um modelo linear entre as duas variáveis consideradas, usando a função `lm()`, e verifique se os coeficientes estimados pela função são os mesmos que você calculou manualmente.
+
+
+```{r}
+## Crie um objeto chamado mod com o modelo ajustado
+mod <- lm(Venda ~ Taxas, data = montgomery)
+summary(mod)
+```
+Comparando os coeficientes
+```{r}
+coef(mod)
+```
+Calculados manualmente
+```{r}
+data.frame(Intercept = beta_0, Taxas = beta_1)
+```
+Observamos que os valores calculados estão em concordância.
+
+#### Análise de Variância {-}
+
+Um quadro de ANOVA para o modelo irá testar, através de um teste F, se a soma de quadrados do modelo é significativamente diferente de zero. 
+
+
+Vamos calcular `SSM`, `RSS` e `MSM` para determinar a estatística $F$.
+
+
+```{r tidy=TRUE}
+y_i = beta_0 + beta_1 * X
+(SSM = sum((y_i - mean(Y))^2))
+(MSM = SSM/1)
+```
+
+
+```{r tidy=TRUE}
+(RSS = sum((Y - y_i)^2))
+(MSE = RSS/(n-2))
+(F = MSM/MSE)
+```
+
+Para avaliar o nosso *F* ratio de `r round(F,3)`, vamos comparar com o valor crítico de F, com 1 d.f. no numerador e `r n-2` d.f. no denominador, com 95\% de grau de confiança.
+
+
+```{r tidy=TRUE}
+qf(0.95,1,n-2)
+```
+Teste da hipótese
+```{r}
+if (F > qf(0.95,1,n-2)) {
+  print("Rejeitamos hipótese nula")
+} else {
+  print("Aceitamos hipótese nula")
+}
+```
+
+Como nosso $F$ ( `r round(F,3)` $>$ `r round(qf(0.95,1,n-2),3)`) rejeitamos a hipótese nula de que $\beta_1$ seja 0.
+
+<!-- adicionar mais explicação sobre o teste F  https://en.wikipedia.org/wiki/F-test -->
+
+```{r tidy=TRUE}
+# erro nos parametros
+# inclinacao b_1
+(se_b_1 <- sqrt(MSE/SSX))
+# deslocamento b_0
+(se_b_0 <- sqrt((MSE*sum(X^2))/(n*SSX)))
+# R-quadrado
+(R2 <- 1 - RSS/SSY)
+# R-quadrado ajustado
+(R2adj <- (SSY/(n-1) - MSE)/(SSY/(n-1)))
+# O erro padrão residual
+(rse <- sqrt(MSE))
+```
+
+#### Análise dos resultados dos coeficientes (p-value) {-}
+
+Vamos fazer o teste de hipóteses nos coeficientes obtidos, utilizando a estatística *t*.
+
+Para isso, determinamos o valor crítico de *t* para o coeficiente $i$, utilizando a seguinte expressão:
+
+
+$$t_i = \frac{\hat{\beta_i}}{se_{\hat{\beta_i}}}$$
+
+
+```{r tidy=TRUE}
+(tvalue_b0 <- beta_0/se_b_0)
+(Prvalue_b0 <- 2*(1 - pt(abs(tvalue_b0),n-2)))
+(tvalue_b1 <- beta_1/se_b_1)
+(Prvalue_b1 <- 2*(1 - pt(abs(tvalue_b1),n-2)))
+```
+
+
+Os valores obtidos de $t_{b0}$ e $t_{b1}$ quando submetidos ao teste de significância resultam em valores menores (Prvalue_b0 = `r Prvalue_b0` e Prvalue_b1 = `r Prvalue_b1`) do que o nível de significância de 0,05, o que implica que podemos **rejeitar** a hipótese nula de que os coeficientes sejam iguais a zero.
+
+
+Para fazer essa ANOVA, usamos a função `anova()`
+
+
+```{r}
+## Quadro de Análise de Variância
+anova(mod)
+```
+O resultado de $F$ é o mesmo obtido manualmente, indicando que nossos cálculos manuais estão corretos.
+
+#### Visualizando o ajuste graficamente {-}
+
+Ainda com o objeto `mod`, podemos ajustar o modelo graficamente ao gráfico da relação entre `Venda` e `Taxas`. 
+
+Para isso, usamos uma função `abline()`, utilizada para inserir linhas em gráficos. 
+
+  +  Faça o gráfico da relação entre Taxa e Vendas, 
+  +  Insira a linha do modelo com abline()
+
+```{r}
+## faça o gráfico dos dados com a função plot
+plot(montgomery$Taxas,montgomery$Venda)
+## adicione uma linha representando o modelo ajustado com a função abline
+abline(coef(mod))
+
+```
+
+#### Gráficos diagnósticos {-}
+
+
+Utilizando a função `plot` do modelo ajustado (**mod**), faça e analise os gráficos diagnósticos (os 2 do topo).
+
+```{r}
+## faça os gráficos diagnósticos chamando plot diretamente no modelo
+## o comando abaixo cria um grid 2x2 para os 4 graficos sairem juntos.
+# sem este comando, os gráficos serão mostrados na sequencia
+# em tamanho normal; analisamos os dois primeiros.
+par(mfrow = c(2,2))
+plot(mod)
+```
+
+Utilizando o pacote `gvlma` para realizar uma análise mais criteriosa das premissas do método dos mínimos quadrados.
+```{r}
+library(gvlma)
+summary(gvlma(mod))
+```
+Vemos que nosso modelo atende todas as premissas do método dos mínimos quadrados!
+
+
+#### Responda {-}
+
+Com os resultados que você obteve acima, responda:
+
+1. Existe uma relação significativa entre preço de venda e taxas? Se sim, de que tipo (positiva,	negativa)?
+
+> Sim, existe uma relação significativa entre preço de venda e taxas. É uma relação positiva.
+
+2. Pelo resultado da ANOVA, o modelo pode ser considerado significativo (ou seja, uma variável pode ser explicada pela outra)?
+
+> Sim, pelo resultado da ANOVA o modelo é significativo; variações aleatórias não explicam o relacionamento entre Venda e Taxas
+
+3. Através do histograma dos resíduos, pode-se dizer que os pressupostos do modelo foram atendidos (ou seja, os resíduos possuem uma distibuição normal com média em torno do zero)?
+
+> Utilizando a função gvlma do pacote de mesmo nome, vemos que o nosso modelo atende os requisitos do método dos mínimos quadrados. Como são poucos pontos (n = 24), o histograma não permite uma visualização eficiente. Os gráficos diagnósticos tem resultados aceitáveis (análise visual): não é possível observar padrão na relação dos resíduos x valores ajustados e o gráfico Normal Q-Q apresenta bom comportamento.
+
+## Exercício  {-}
+
+
+Para uma amostra de oito operadores de máquina, foram coletados o número de horas de treinamento ($x$) e o tempo necessário para completar o trabalho ($y$).  Os dados coletados encontram-se na tabela abaixo:
+
+x |  5,2 |  5,1 |  4,9 |  4,6 |  4,7 |  4,8 |  4,6 |  4,9  |
+--|------|------|------|------|------|------|------|-------|
+y |  13  |   15 |  18  |  20  |  19  |  17  |  21  |  16   |
+
+
+
+Pede-se:
+
+a) Faça o gráfico de dispersão para esses dados.
+b) Determine o modelo de regressão linear simples entre as variáveis $x$ e $y$.
+b) Faça uma análise do modelo de regressão utilizando o `summary`: 
+    i) resíduos, significância estatística dos coeficientes, percentual de variância explicada pelo modelo
+c) Em seguida, trace, no gráfico anterior, a reta de regressão.
+d) Calcule e interprete os coeficientes de correlação ($r$) e determinação ($r^2$). Use a função `cor(x,y)` para achar o coeficiente de correlação e depois `cor(x,y)^2` para achar o coeficiente de determinação.
+
